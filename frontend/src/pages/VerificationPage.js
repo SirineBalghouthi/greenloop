@@ -6,9 +6,11 @@ import { useAuth } from '../context/AuthContext';
 const VerificationPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { verifyCode } = useAuth();
+  const { verifyCode: verifyCodeAPI, sendVerificationCode } = useAuth();
   
   const phone = location.state?.phone || '';
+  const devCode = location.state?.code; // Code en mode dev
+  const devMode = location.state?.devMode;
   const [code, setCode] = useState(['', '', '', '', '', '']);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -19,6 +21,7 @@ const VerificationPage = () => {
     address: '',
     city: ''
   });
+  const [resendTimer, setResendTimer] = useState(60);
 
   const handleCodeChange = (index, value) => {
     if (value.length > 1) return;
@@ -39,6 +42,22 @@ const VerificationPage = () => {
     }
   };
 
+  // Timer pour renvoyer le code
+  React.useEffect(() => {
+    if (resendTimer > 0) {
+      const timer = setTimeout(() => setResendTimer(resendTimer - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [resendTimer]);
+
+  // Auto-remplir le code en mode dev
+  React.useEffect(() => {
+    if (devCode && devMode) {
+      const codeArray = devCode.split('');
+      setCode(codeArray);
+    }
+  }, [devCode, devMode]);
+
   const handleVerify = async () => {
     const fullCode = code.join('');
     if (fullCode.length !== 6) {
@@ -50,20 +69,46 @@ const VerificationPage = () => {
     setLoading(true);
 
     try {
-      const result = await verifyCode(phone, fullCode, userData);
+      // D'abord vérifier le code sans données utilisateur
+      const result = await verifyCodeAPI(phone, fullCode, {});
       
+      // Si succès, vérifier si c'est une inscription ou connexion
       if (result.message === 'Connexion réussie') {
         navigate('/dashboard');
-      } else {
-        // Nouvel utilisateur - afficher le formulaire d'inscription
+      } else if (result.message === 'Inscription réussie') {
+        navigate('/dashboard');
+      } else if (result.needsRegistration) {
+        // Code valide mais besoin d'inscription
         setShowRegisterForm(true);
       }
     } catch (err) {
-      if (err.message?.includes('inscription')) {
+      if (err.message === 'INSCRIPTION_REQUIRED') {
+        // Code valide, afficher le formulaire d'inscription
         setShowRegisterForm(true);
       } else {
         setError(err.message || 'Code invalide');
       }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResendCode = async () => {
+    if (resendTimer > 0) return;
+    
+    setLoading(true);
+    setError('');
+    try {
+      const result = await sendVerificationCode(phone);
+      setResendTimer(60);
+      setCode(['', '', '', '', '', '']);
+      // Mettre à jour le code en mode dev si disponible
+      if (result.code && result.dev_mode) {
+        const codeArray = result.code.split('');
+        setCode(codeArray);
+      }
+    } catch (err) {
+      setError(err.message || 'Erreur lors du renvoi du code');
     } finally {
       setLoading(false);
     }
@@ -82,7 +127,7 @@ const VerificationPage = () => {
 
     try {
       const fullCode = code.join('');
-      await verifyCode(phone, fullCode, userData);
+      await verifyCodeAPI(phone, fullCode, userData);
       navigate('/dashboard');
     } catch (err) {
       setError(err.message || 'Erreur lors de l\'inscription');
@@ -237,9 +282,11 @@ const VerificationPage = () => {
             ))}
           </div>
 
-          <p className="text-sm text-center text-gray-600 mb-6">
-            Code de test: <span className="font-mono font-bold">123456</span>
-          </p>
+          {devMode && devCode && (
+            <p className="text-sm text-center text-green-600 mb-6 font-semibold">
+              Mode développement - Code: <span className="font-mono font-bold">{devCode}</span>
+            </p>
+          )}
 
           {error && (
             <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
@@ -255,15 +302,15 @@ const VerificationPage = () => {
             {loading ? 'Vérification...' : 'Vérifier'}
           </button>
 
-          <button className="text-green-600 hover:underline text-sm block mx-auto">
-            Renvoyer dans 56s
+          <button 
+            onClick={handleResendCode}
+            disabled={resendTimer > 0 || loading}
+            className="text-green-600 hover:underline text-sm block mx-auto disabled:text-gray-400 disabled:cursor-not-allowed"
+          >
+            {resendTimer > 0 ? `Renvoyer dans ${resendTimer}s` : 'Renvoyer le code'}
           </button>
         </div>
 
-        <p className="text-center text-gray-600 text-sm mt-6">
-          Code envoyé !<br />
-          Code de test: 123456
-        </p>
       </div>
     </div>
   );

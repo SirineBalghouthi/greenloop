@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { SocketProvider } from './context/SocketContext';
 
 // Pages
 import LandingPage from './pages/LandingPage';
@@ -12,6 +13,8 @@ import MapPage from './pages/MapPage';
 import MessagesPage from './pages/MessagesPage';
 import ProfilePage from './pages/ProfilePage';
 import CreateAnnouncementPage from './pages/CreateAnnouncementPage';
+import FavoritesPage from './pages/FavoritesPage';
+import AnnouncementDetailPage from './pages/AnnouncementDetailPage';
 
 import AdminLoginPage from './pages/admin/AdminLoginPage';
 import AdminDashboard from './pages/admin/AdminDashboard';
@@ -42,7 +45,8 @@ const ProtectedRoute = ({ children }) => {
 function App() {
   return (
     <AuthProvider>
-      <Router>
+      <SocketProvider>
+        <Router>
         <div className="min-h-screen bg-gray-50">
           <Routes>
             {/* Routes publiques */}
@@ -95,6 +99,14 @@ function App() {
               } 
             />
             <Route 
+              path="/annonces/:id" 
+              element={
+                <ProtectedRoute>
+                  <AnnouncementDetailPage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
               path="/carte" 
               element={
                 <ProtectedRoute>
@@ -126,9 +138,18 @@ function App() {
                 </ProtectedRoute>
               } 
             />
+            <Route 
+              path="/favoris" 
+              element={
+                <ProtectedRoute>
+                  <FavoritesPage />
+                </ProtectedRoute>
+              } 
+            />
           </Routes>
         </div>
       </Router>
+      </SocketProvider>
     </AuthProvider>
   );
 }

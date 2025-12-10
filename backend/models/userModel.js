@@ -8,11 +8,16 @@ const userSchema = new mongoose.Schema({
     unique: true,
     trim: true
   },
-  password: { type: String, required: true },
+  password: { 
+    type: String, 
+    required: false, // Optionnel pour les utilisateurs SMS
+    select: false // Ne pas inclure par défaut dans les requêtes
+  },
   full_name: {
     type: String,
-    required: [true, 'Le nom complet est requis'],
-    trim: true
+    required: false, // Optionnel pour les utilisateurs temporaires (sera rempli lors de l'inscription)
+    trim: true,
+    default: 'Utilisateur Temporaire'
   },
   user_type: {
     type: String,

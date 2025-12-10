@@ -13,9 +13,10 @@ import {
 } from 'lucide-react';
 
 const AnnouncementsPage = () => {
-  const { token, API_URL } = useAuth();
+  const { token, API_URL, user } = useAuth();
   const navigate = useNavigate();
   const [announcements, setAnnouncements] = useState([]);
+  const [favorites, setFavorites] = useState(new Set());
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState('all');
@@ -52,7 +53,63 @@ const AnnouncementsPage = () => {
 
   useEffect(() => {
     loadAnnouncements();
-  }, [loadAnnouncements]);
+    if (token) {
+      loadFavorites();
+    }
+  }, [loadAnnouncements, token]);
+
+  const loadFavorites = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/favorites`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (response.data.success) {
+        const favoriteIds = new Set(response.data.favorites.map(fav => fav.announcement_id));
+        setFavorites(favoriteIds);
+      }
+    } catch (error) {
+      console.error('Erreur chargement favoris:', error);
+    }
+  };
+
+  const toggleFavorite = async (e, announcementId) => {
+    e.stopPropagation(); // Empêcher la navigation
+    
+    if (!token) {
+      alert('Connectez-vous pour ajouter aux favoris');
+      return;
+    }
+
+    try {
+      const isFavorite = favorites.has(announcementId);
+      
+      if (isFavorite) {
+        // Retirer des favoris
+        await axios.delete(`${API_URL}/favorites/${announcementId}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setFavorites(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(announcementId);
+          return newSet;
+        });
+      } else {
+        // Ajouter aux favoris
+        await axios.post(`${API_URL}/favorites`, {
+          announcement_id: announcementId
+        }, {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        setFavorites(prev => new Set(prev).add(announcementId));
+      }
+    } catch (error) {
+      console.error('Erreur toggleFavorite:', error);
+      alert(error.response?.data?.message || 'Erreur lors de l\'ajout aux favoris');
+    }
+  };
 
   const getWasteColor = (type) => {
     const wasteType = wasteTypes.find(w => w.value === type);
@@ -157,7 +214,7 @@ const AnnouncementsPage = () => {
               <div
                 key={announcement.id}
                 className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition cursor-pointer"
-                onClick={() => navigate(`/annonces/${announcement.id}`)}
+                onClick={() => navigate(`/annonces/${announcement.id || announcement._id}`)}
               >
                 {/* Image */}
                 <div className="relative h-48 bg-gray-200">
@@ -179,8 +236,16 @@ const AnnouncementsPage = () => {
                   </div>
 
                   {/* Favorite Button */}
-                  <button className="absolute top-3 right-3 w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-md hover:bg-gray-50 transition">
-                    <Heart className="w-4 h-4 text-gray-600" />
+                  <button
+                    onClick={(e) => toggleFavorite(e, announcement.id)}
+                    className={`absolute top-3 right-3 w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-md hover:bg-gray-50 transition ${
+                      favorites.has(announcement.id) ? 'text-red-500' : 'text-gray-600'
+                    }`}
+                    title={favorites.has(announcement.id) ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+                  >
+                    <Heart 
+                      className={`w-4 h-4 ${favorites.has(announcement.id) ? 'fill-current' : ''}`} 
+                    />
                   </button>
                 </div>
 

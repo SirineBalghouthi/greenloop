@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext';
 
 const LoginPage = () => {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { sendVerificationCode } = useAuth();
   const [phone, setPhone] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -22,8 +22,14 @@ const LoginPage = () => {
     setLoading(true);
 
     try {
-      await login(phone);
-      navigate('/verification', { state: { phone } });
+      const result = await sendVerificationCode(phone);
+      navigate('/verification', { 
+        state: { 
+          phone: result.phone || phone,
+          code: result.code, // Pour le mode dev uniquement
+          devMode: result.dev_mode
+        } 
+      });
     } catch (err) {
       setError(err.message || 'Erreur lors de l\'envoi du code');
     } finally {

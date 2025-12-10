@@ -10,7 +10,8 @@ const authRoutes = require('./routes/authRoutes');
 const announcementRoutes = require('./routes/announcementRoutes');
 const userRoutes = require('./routes/userRoutes');
 const messageRoutes = require('./routes/messageRoutes');
-const adminRoutes = require('./routes/adminRoutes'); 
+const adminRoutes = require('./routes/adminRoutes');
+const favoriteRoutes = require('./routes/favoriteRoutes'); 
 
 dotenv.config();
 
@@ -38,10 +39,19 @@ app.use('/api/announcements', announcementRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/favorites', favoriteRoutes);
 
 // Socket.IO pour le chat en temps réel
 io.on('connection', (socket) => {
   console.log('✅ Nouvel utilisateur connecté:', socket.id);
+
+  // Authentification Socket.io
+  socket.on('authenticate', (data) => {
+    if (data.token && data.userId) {
+      socket.userId = data.userId;
+      console.log(`🔐 Utilisateur ${data.userId} authentifié sur Socket.io`);
+    }
+  });
 
   socket.on('join_room', (roomId) => {
     socket.join(roomId);
@@ -49,7 +59,19 @@ io.on('connection', (socket) => {
   });
 
   socket.on('send_message', (data) => {
+    // Diffuser le message à tous les utilisateurs de la room
     io.to(data.roomId).emit('receive_message', data);
+    console.log(`💬 Message envoyé dans la room ${data.roomId}`);
+  });
+
+  socket.on('typing', (data) => {
+    // Diffuser le statut de frappe aux autres utilisateurs de la room
+    socket.to(data.roomId).emit('typing', data);
+  });
+
+  socket.on('stop_typing', (data) => {
+    // Arrêter le statut de frappe
+    socket.to(data.roomId).emit('stop_typing', data);
   });
 
   socket.on('disconnect', () => {

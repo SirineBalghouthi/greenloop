@@ -7,7 +7,8 @@ const {
   reserveAnnouncement,
   confirmCollection,
   deleteAnnouncement,
-  getMyAnnouncements
+  getMyAnnouncements,
+  updateAnnouncementStatus
 } = require('../controllers/announcementController');
 const { protect } = require('../middleware/auth');
 const upload = require('../middleware/upload');
@@ -18,6 +19,7 @@ router.get('/my-announcements', protect, getMyAnnouncements);
 router.get('/:id', protect, getAnnouncementById);
 router.post('/:id/reserve', protect, reserveAnnouncement);
 router.post('/:id/confirm', protect, confirmCollection);
+router.patch('/:id/status', protect, updateAnnouncementStatus);
 router.delete('/:id', protect, deleteAnnouncement);
 
 module.exports = router;

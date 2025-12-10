@@ -6,7 +6,7 @@ import axios from 'axios';
 
 const AdminLoginPage = () => {
   const navigate = useNavigate();
-  const { login: authLogin } = useAuth();
+  const { login: authLogin, API_URL } = useAuth();
   const [formData, setFormData] = useState({
     phone: '',
     password: ''
@@ -28,7 +28,7 @@ const AdminLoginPage = () => {
     setLoading(true);
 
     try {
-      const response = await axios.post('http://localhost:5000/api/auth/admin-login', {
+      const response = await axios.post(`${API_URL}/auth/admin-login`, {
         phone: formData.phone,
         password: formData.password
       });

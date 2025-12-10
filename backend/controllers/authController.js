@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/userModel');
 const EnvironmentalImpact = require('../models/environmentalImpactModel');
+const { sendSMS, normalizePhone } = require('../utils/smsHelper');
 
 // Générer un code de vérification
 const generateVerificationCode = () => {
@@ -10,15 +11,10 @@ const generateVerificationCode = () => {
 // Générer un token JWT
 const generateToken = (userId) => {
   return jwt.sign({ userId }, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRE
+    expiresIn: process.env.JWT_EXPIRE || '7d'
   });
 };
 
-// Envoyer SMS (simulation)
-const sendSMS = async (phone, code) => {
-  console.log(`📱 SMS envoyé au ${phone}: Code de vérification: ${code}`);
-  return true;
-};
 
 // Connexion/Inscription par téléphone
 exports.login = async (req, res) => {
@@ -32,12 +28,15 @@ exports.login = async (req, res) => {
       });
     }
 
+    // Normaliser le numéro de téléphone
+    const normalizedPhone = normalizePhone(phone);
+
     // Générer le code de vérification
     const verificationCode = generateVerificationCode();
     const codeExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
     // Chercher ou créer l'utilisateur
-    let user = await User.findOne({ phone });
+    let user = await User.findOne({ phone: normalizedPhone });
 
     if (user) {
       // Utilisateur existant - mettre à jour le code
@@ -47,7 +46,8 @@ exports.login = async (req, res) => {
     } else {
       // Nouveau numéro - créer un enregistrement temporaire
       user = await User.create({
-        phone,
+        phone: normalizedPhone,
+        password: '', // Mot de passe vide pour les utilisateurs SMS
         full_name: 'Utilisateur Temporaire',
         verification_code: verificationCode,
         verification_code_expires: codeExpires,
@@ -56,19 +56,28 @@ exports.login = async (req, res) => {
     }
 
     // Envoyer le SMS
-    await sendSMS(phone, verificationCode);
+    const smsResult = await sendSMS(normalizedPhone, verificationCode);
 
-    res.json({ 
+    // En mode développement, inclure le code dans la réponse
+    const response = { 
       success: true, 
       message: 'Code de vérification envoyé',
       exists: user.is_verified,
-      code: verificationCode // RETIRER EN PRODUCTION
-    });
+      phone: normalizedPhone
+    };
+
+    // Ne renvoyer le code qu'en développement
+    if (process.env.NODE_ENV === 'development' || smsResult.mode === 'dev' || smsResult.mode === 'dev-fallback') {
+      response.code = verificationCode;
+      response.dev_mode = true;
+    }
+
+    res.json(response);
   } catch (error) {
     console.error('Erreur login:', error);
     res.status(500).json({ 
       success: false, 
-      message: 'Erreur lors de l\'envoi du code' 
+      message: error.message || 'Erreur lors de l\'envoi du code' 
     });
   }
 };
@@ -85,8 +94,11 @@ exports.verifyCode = async (req, res) => {
       });
     }
 
+    // Normaliser le numéro de téléphone
+    const normalizedPhone = normalizePhone(phone);
+
     // Chercher l'utilisateur
-    const user = await User.findOne({ phone });
+    const user = await User.findOne({ phone: normalizedPhone });
 
     if (!user) {
       return res.status(404).json({ 

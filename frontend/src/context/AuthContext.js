@@ -50,6 +50,67 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Envoyer le code de vérification
+  const sendVerificationCode = async (phone) => {
+    try {
+      const response = await fetch('http://localhost:5000/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ phone })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Erreur lors de l\'envoi du code');
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Erreur sendVerificationCode:', error);
+      throw error;
+    }
+  };
+
+  // Vérifier le code et se connecter
+  const verifyCode = async (phone, code, userData = {}) => {
+    try {
+      const response = await fetch('http://localhost:5000/api/auth/verify', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          phone,
+          code,
+          ...userData
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        // Si besoin d'inscription
+        if (data.needsRegistration) {
+          throw new Error('INSCRIPTION_REQUIRED');
+        }
+        throw new Error(data.message || 'Code invalide');
+      }
+
+      // Si succès, connecter l'utilisateur
+      if (data.token && data.user) {
+        login(data.user, data.token);
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Erreur verifyCode:', error);
+      throw error;
+    }
+  };
+
   const login = (userData, authToken) => {
     // ✅ IMPORTANT: Stocker uniquement les données nécessaires
     console.log('AuthContext login - userData:', userData);
@@ -57,12 +118,12 @@ export const AuthProvider = ({ children }) => {
     
     // S'assurer que userData est un objet propre
     const cleanUserData = {
-      userId: userData.userId,
+      userId: userData.id || userData.userId,
       full_name: userData.full_name,
       phone: userData.phone,
       user_type: userData.user_type,
-      points: userData.points,
-      level: userData.level
+      points: userData.points || 0,
+      level: userData.level || 'bronze'
     };
     
     setUser(cleanUserData);
@@ -80,13 +141,19 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('user'); // Au cas où
   };
 
+  // URL de l'API backend
+  const API_URL = 'http://localhost:5000/api';
+
   const value = {
     user,
     token,
     login,
     logout,
     loading,
-    isAuthenticated: !!token
+    isAuthenticated: !!token,
+    sendVerificationCode,
+    verifyCode,
+    API_URL
   };
 
   return (

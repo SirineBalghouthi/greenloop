@@ -1,10 +1,19 @@
 const multer = require('multer');
 const path = require('path');
+const fs = require('fs');
+
+// S'assurer que le dossier uploads existe
+const uploadsDir = path.join(__dirname, '..', 'uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+  console.log('✅ Dossier uploads créé');
+}
 
 // Configuration du stockage
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, 'uploads/');
+    // Utiliser le chemin absolu
+    cb(null, uploadsDir);
   },
   filename: function (req, file, cb) {
     // Générer un nom unique
