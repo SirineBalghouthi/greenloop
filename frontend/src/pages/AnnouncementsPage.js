@@ -213,7 +213,7 @@ const AnnouncementsPage = () => {
             {filteredAnnouncements.map((announcement) => (
               <div
                 key={announcement.id}
-                className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition cursor-pointer"
+                className="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer border border-gray-100 hover:border-green-300 transform hover:-translate-y-1"
                 onClick={() => navigate(`/annonces/${announcement.id || announcement._id}`)}
               >
                 {/* Image */}

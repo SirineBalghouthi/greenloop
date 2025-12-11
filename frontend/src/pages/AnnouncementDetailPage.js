@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { MapPin, Clock, User, Heart, MessageCircle, ArrowLeft, ExternalLink, Package } from 'lucide-react';
+import { MapPin, Clock, User, Heart, MessageCircle, ArrowLeft, ExternalLink, Package, Calendar, QrCode, Download } from 'lucide-react';
 import Layout from '../components/Layout';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
+import QRCodeScanner from '../components/QRCodeScanner';
 
 const wasteTypeColors = {
   medicaments: '#ef4444',
@@ -29,6 +30,9 @@ const AnnouncementDetailPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [isFavorite, setIsFavorite] = useState(false);
+  const [qrCodeImage, setQrCodeImage] = useState(null);
+  const [showQRScanner, setShowQRScanner] = useState(false);
+  const [showQRCode, setShowQRCode] = useState(false);
 
   useEffect(() => {
     loadAnnouncement();
@@ -148,6 +152,35 @@ const AnnouncementDetailPage = () => {
       }
     });
   };
+
+  const loadQRCode = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/announcements/${id}/qrcode`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (response.data.success) {
+        setQrCodeImage(response.data.qr_code_image);
+        setShowQRCode(true);
+      }
+    } catch (err) {
+      console.error('Erreur chargement QR code:', err);
+    }
+  };
+
+  const handleQRScanSuccess = () => {
+    loadAnnouncement(); // Recharger l'annonce pour mettre à jour le statut
+  };
+
+  const isOwner = user && announcement && (
+    user.id === announcement.user_id?._id || 
+    user.id === announcement.user_id?.toString() ||
+    user.userId === announcement.user_id?._id?.toString()
+  );
+  const isCollector = user && announcement && announcement.reserved_by && (
+    user.id === announcement.reserved_by?._id || 
+    user.id === announcement.reserved_by?.toString() ||
+    user.userId === announcement.reserved_by?.toString()
+  );
 
   if (loading) {
     return (
@@ -285,6 +318,103 @@ const AnnouncementDetailPage = () => {
               </span>
             </div>
 
+            {/* Planning de Disponibilité */}
+            {announcement.availability_schedule && announcement.availability_schedule.length > 0 && (
+              <div className="border-t border-gray-200 pt-4">
+                <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                  <Calendar className="w-5 h-5 text-green-600" />
+                  Planning de Disponibilité
+                </h3>
+                <div className="space-y-2">
+                  {announcement.availability_schedule.map((schedule, index) => {
+                    const dayLabels = {
+                      monday: 'Lundi',
+                      tuesday: 'Mardi',
+                      wednesday: 'Mercredi',
+                      thursday: 'Jeudi',
+                      friday: 'Vendredi',
+                      saturday: 'Samedi',
+                      sunday: 'Dimanche'
+                    };
+                    return (
+                      <div key={index} className="bg-gray-50 rounded-lg p-3">
+                        <div className="font-medium text-gray-900 mb-2">
+                          {dayLabels[schedule.day] || schedule.day}
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {schedule.time_slots && schedule.time_slots.map((slot, slotIndex) => (
+                            <span
+                              key={slotIndex}
+                              className="px-3 py-1 bg-green-100 text-green-700 text-sm rounded-full"
+                            >
+                              {slot.start} - {slot.end}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* QR Code Section */}
+            {isOwner && announcement.status === 'reserve' && (
+              <div className="border-t border-gray-200 pt-4">
+                <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                  <QrCode className="w-5 h-5 text-green-600" />
+                  QR Code de Collecte
+                </h3>
+                <p className="text-sm text-gray-600 mb-3">
+                  Montrez ce QR code au collecteur pour valider la collecte. Vous gagnerez +30 points !
+                </p>
+                {showQRCode && qrCodeImage ? (
+                  <div className="bg-white p-4 rounded-lg border-2 border-green-200">
+                    <img src={qrCodeImage} alt="QR Code" className="w-48 h-48 mx-auto mb-3" />
+                    <button
+                      onClick={() => {
+                        const link = document.createElement('a');
+                        link.href = qrCodeImage;
+                        link.download = `qr-code-${id}.png`;
+                        link.click();
+                      }}
+                      className="w-full px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition flex items-center justify-center gap-2"
+                    >
+                      <Download className="w-4 h-4" />
+                      Télécharger le QR Code
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={loadQRCode}
+                    className="w-full px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition flex items-center justify-center gap-2"
+                  >
+                    <QrCode className="w-4 h-4" />
+                    Générer le QR Code
+                  </button>
+                )}
+              </div>
+            )}
+
+            {isCollector && announcement.status === 'reserve' && (
+              <div className="border-t border-gray-200 pt-4">
+                <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                  <QrCode className="w-5 h-5 text-green-600" />
+                  Scanner le QR Code
+                </h3>
+                <p className="text-sm text-gray-600 mb-3">
+                  Scannez le QR code du déposant pour confirmer la collecte. Vous gagnerez +50 points !
+                </p>
+                <button
+                  onClick={() => setShowQRScanner(true)}
+                  className="w-full px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition flex items-center justify-center gap-2"
+                >
+                  <QrCode className="w-4 h-4" />
+                  Scanner le QR Code
+                </button>
+              </div>
+            )}
+
             {/* Action Buttons */}
             <div className="flex gap-4 pt-4 border-t">
               <button
@@ -305,6 +435,15 @@ const AnnouncementDetailPage = () => {
           </div>
         </div>
       </div>
+
+      {/* QR Code Scanner Modal */}
+      {showQRScanner && (
+        <QRCodeScanner
+          announcementId={id}
+          onScanSuccess={handleQRScanSuccess}
+          onClose={() => setShowQRScanner(false)}
+        />
+      )}
     </Layout>
   );
 };

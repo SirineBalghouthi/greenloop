@@ -11,7 +11,11 @@ const announcementRoutes = require('./routes/announcementRoutes');
 const userRoutes = require('./routes/userRoutes');
 const messageRoutes = require('./routes/messageRoutes');
 const adminRoutes = require('./routes/adminRoutes');
-const favoriteRoutes = require('./routes/favoriteRoutes'); 
+const favoriteRoutes = require('./routes/favoriteRoutes');
+const videoRoutes = require('./routes/videoRoutes');
+const marketplaceRoutes = require('./routes/marketplaceRoutes');
+const notificationRoutes = require('./routes/notificationRoutes');
+const seedRoutes = require('./routes/seedRoutes'); 
 
 dotenv.config();
 
@@ -40,15 +44,28 @@ app.use('/api/users', userRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/favorites', favoriteRoutes);
+app.use('/api/videos', videoRoutes);
+app.use('/api/marketplace', marketplaceRoutes);
+app.use('/api/notifications', notificationRoutes);
+app.use('/api/seed', seedRoutes);
 
 // Socket.IO pour le chat en temps réel
+const User = require('./models/userModel');
+
 io.on('connection', (socket) => {
   console.log('✅ Nouvel utilisateur connecté:', socket.id);
 
   // Authentification Socket.io
-  socket.on('authenticate', (data) => {
+  socket.on('authenticate', async (data) => {
     if (data.token && data.userId) {
       socket.userId = data.userId;
+      // Mettre l'utilisateur en ligne
+      await User.findByIdAndUpdate(data.userId, { 
+        is_online: true,
+        last_seen: new Date()
+      });
+      // Notifier les autres utilisateurs
+      io.emit('user_online', { userId: data.userId });
       console.log(`🔐 Utilisateur ${data.userId} authentifié sur Socket.io`);
     }
   });
@@ -74,7 +91,16 @@ io.on('connection', (socket) => {
     socket.to(data.roomId).emit('stop_typing', data);
   });
 
-  socket.on('disconnect', () => {
+  socket.on('disconnect', async () => {
+    if (socket.userId) {
+      // Mettre l'utilisateur hors ligne
+      await User.findByIdAndUpdate(socket.userId, { 
+        is_online: false,
+        last_seen: new Date()
+      });
+      // Notifier les autres utilisateurs
+      io.emit('user_offline', { userId: socket.userId });
+    }
     console.log('❌ Utilisateur déconnecté:', socket.id);
   });
 });

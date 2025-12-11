@@ -37,6 +37,10 @@ const ProfilePage = () => {
   });
 
   useEffect(() => {
+    loadMyAnnouncements();
+  }, []);
+
+  useEffect(() => {
     if (activeTab === 'announcements') {
       loadMyAnnouncements();
     }

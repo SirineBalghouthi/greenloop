@@ -15,6 +15,13 @@ import ProfilePage from './pages/ProfilePage';
 import CreateAnnouncementPage from './pages/CreateAnnouncementPage';
 import FavoritesPage from './pages/FavoritesPage';
 import AnnouncementDetailPage from './pages/AnnouncementDetailPage';
+import VideosPage from './pages/VideosPage';
+import VideoDetailPage from './pages/VideoDetailPage';
+import CreateVideoPage from './pages/CreateVideoPage';
+import SeedPage from './pages/SeedPage';
+import MarketplacePage from './pages/MarketplacePage';
+import ProductDetailPage from './pages/ProductDetailPage';
+import CreateProductPage from './pages/CreateProductPage';
 
 import AdminLoginPage from './pages/admin/AdminLoginPage';
 import AdminDashboard from './pages/admin/AdminDashboard';
@@ -145,6 +152,46 @@ function App() {
                   <FavoritesPage />
                 </ProtectedRoute>
               } 
+            />
+            <Route 
+              path="/videos" 
+              element={<VideosPage />} 
+            />
+            <Route 
+              path="/videos/create" 
+              element={
+                <ProtectedRoute>
+                  <CreateVideoPage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/videos/:id" 
+              element={<VideoDetailPage />} 
+            />
+            <Route 
+              path="/graine" 
+              element={
+                <ProtectedRoute>
+                  <SeedPage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/marketplace" 
+              element={<MarketplacePage />} 
+            />
+            <Route 
+              path="/marketplace/create" 
+              element={
+                <ProtectedRoute>
+                  <CreateProductPage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/marketplace/:id" 
+              element={<ProductDetailPage />} 
             />
           </Routes>
         </div>

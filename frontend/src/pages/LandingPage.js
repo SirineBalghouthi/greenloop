@@ -1,9 +1,11 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Recycle, Leaf, Users, MapPin, TrendingUp, Award } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 const LandingPage = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const features = [
     {
@@ -55,13 +57,13 @@ const LandingPage = () => {
                 onClick={() => navigate('/login')}
                 className="px-6 py-2 text-green-600 font-medium hover:text-green-700 transition"
               >
-                Connexion
+                {t('auth.login', 'Connexion')}
               </button>
               <button
                 onClick={() => navigate('/login')}
                 className="px-6 py-2 bg-green-500 text-white rounded-lg font-medium hover:bg-green-600 transition"
               >
-                Inscription
+                {t('auth.signup', 'Inscription')}
               </button>
             </div>
           </div>
@@ -72,23 +74,20 @@ const LandingPage = () => {
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
         <div className="text-center">
           <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6">
-            Transformez vos déchets
-            <br />
-            <span className="text-green-600">en ressources</span>
+            {t('landing.heroTitle', 'Transformez vos déchets en ressources')}
           </h1>
           <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
-            GreenLoop connecte déposants, collecteurs et recycleurs en Tunisie.
-            Recyclez facilement, gagnez des points et mesurez votre impact environnemental.
+            {t('landing.heroSub', 'GreenLoop connecte déposants, collecteurs et recycleurs en Tunisie. Recyclez facilement, gagnez des points et mesurez votre impact environnemental.')}
           </p>
           <div className="flex items-center justify-center gap-4">
             <button
               onClick={() => navigate('/login')}
               className="px-8 py-4 bg-green-500 text-white rounded-lg font-semibold text-lg hover:bg-green-600 transition shadow-lg"
             >
-              Commencer Gratuitement
+              {t('landing.ctaStart', 'Commencer Gratuitement')}
             </button>
             <button className="px-8 py-4 bg-white text-green-600 rounded-lg font-semibold text-lg hover:bg-gray-50 transition border-2 border-green-500">
-              En Savoir Plus
+              {t('landing.ctaMore', 'En Savoir Plus')}
             </button>
           </div>
         </div>

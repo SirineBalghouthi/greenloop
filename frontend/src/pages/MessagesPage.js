@@ -310,14 +310,26 @@ const MessagesPage = () => {
                     }`}
                   >
                     <div className="flex items-start gap-3">
-                      <div className="w-12 h-12 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center text-white font-semibold text-lg flex-shrink-0">
-                        {conv.other_user?.full_name?.charAt(0)?.toUpperCase() || 'U'}
+                      <div className="relative">
+                        <div className="w-12 h-12 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center text-white font-semibold text-lg flex-shrink-0">
+                          {conv.other_user?.full_name?.charAt(0)?.toUpperCase() || 'U'}
+                        </div>
+                        {conv.other_user?.is_online && (
+                          <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 border-2 border-white rounded-full animate-pulse"></div>
+                        )}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between mb-1">
-                          <h3 className="font-semibold text-gray-900 truncate">
-                            {conv.other_user?.full_name || 'Utilisateur'}
-                          </h3>
+                          <div className="flex items-center gap-2">
+                            <h3 className="font-semibold text-gray-900 truncate">
+                              {conv.other_user?.full_name || 'Utilisateur'}
+                            </h3>
+                            {conv.other_user?.is_online ? (
+                              <span className="text-xs text-green-600 font-medium">En ligne</span>
+                            ) : (
+                              <span className="text-xs text-gray-400">Hors ligne</span>
+                            )}
+                          </div>
                           <span className="text-xs text-gray-500 flex-shrink-0 ml-2">
                             {formatTime(conv.last_message_at)}
                           </span>
@@ -346,15 +358,30 @@ const MessagesPage = () => {
           {selectedConversation ? (
             <>
               {/* Header de conversation */}
-              <div className="bg-white border-b border-gray-200 p-4 flex items-center justify-between">
+              <div className="bg-white border-b border-gray-200 p-4 flex items-center justify-between shadow-sm">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center text-white font-semibold">
-                    {selectedConversation.other_user?.full_name?.charAt(0)?.toUpperCase() || 'U'}
+                  <div className="relative">
+                    <div className="w-10 h-10 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center text-white font-semibold">
+                      {selectedConversation.other_user?.full_name?.charAt(0)?.toUpperCase() || 'U'}
+                    </div>
+                    {selectedConversation.other_user?.is_online && (
+                      <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 border-2 border-white rounded-full animate-pulse"></div>
+                    )}
                   </div>
                   <div>
-                    <h2 className="font-semibold text-gray-900">
-                      {selectedConversation.other_user?.full_name || 'Utilisateur'}
-                    </h2>
+                    <div className="flex items-center gap-2">
+                      <h2 className="font-semibold text-gray-900">
+                        {selectedConversation.other_user?.full_name || 'Utilisateur'}
+                      </h2>
+                      {selectedConversation.other_user?.is_online ? (
+                        <span className="text-xs text-green-600 font-medium flex items-center gap-1">
+                          <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                          En ligne
+                        </span>
+                      ) : (
+                        <span className="text-xs text-gray-400">Hors ligne</span>
+                      )}
+                    </div>
                     <p className="text-xs text-gray-500">
                       {selectedConversation.other_user?.user_type || 'Membre'} • {selectedConversation.other_user?.phone || ''}
                     </p>

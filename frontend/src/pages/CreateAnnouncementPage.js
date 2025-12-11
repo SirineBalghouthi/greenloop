@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import Layout from '../components/Layout';
-import { Upload, MapPin, Package, ArrowLeft } from 'lucide-react';
+import { Upload, MapPin, Package, ArrowLeft, Calendar, Clock, Plus, X } from 'lucide-react';
 
 const CreateAnnouncementPage = () => {
   const navigate = useNavigate();
@@ -12,6 +12,7 @@ const CreateAnnouncementPage = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [imagePreview, setImagePreview] = useState(null);
+  const [suggestionLoading, setSuggestionLoading] = useState(false);
   
   const [formData, setFormData] = useState({
     title: '',
@@ -21,7 +22,8 @@ const CreateAnnouncementPage = () => {
     latitude: 36.8065,
     longitude: 10.1815,
     address: '',
-    image: null
+    image: null,
+    availability_schedule: []
   });
 
   const wasteTypes = [
@@ -64,6 +66,7 @@ const CreateAnnouncementPage = () => {
       data.append('latitude', formData.latitude);
       data.append('longitude', formData.longitude);
       data.append('address', formData.address);
+      data.append('availability_schedule', JSON.stringify(formData.availability_schedule));
       if (formData.image) {
         data.append('image', formData.image);
       }
@@ -83,6 +86,30 @@ const CreateAnnouncementPage = () => {
       setError(err.response?.data?.message || 'Erreur lors de la création');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSuggestCategory = async () => {
+    setError('');
+    setSuggestionLoading(true);
+    try {
+      const response = await axios.post(
+        `${API_URL}/announcements/classify`,
+        {
+          title: formData.title,
+          description: formData.description
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+      if (response.data.category) {
+        setFormData(prev => ({ ...prev, waste_type: response.data.category }));
+      }
+    } catch (err) {
+      setError('Impossible de suggérer une catégorie pour le moment.');
+    } finally {
+      setSuggestionLoading(false);
     }
   };
 
@@ -201,19 +228,29 @@ const CreateAnnouncementPage = () => {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Type de déchet *
               </label>
-              <select
-                name="waste_type"
-                value={formData.waste_type}
-                onChange={handleChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                required
-              >
-                {wasteTypes.map(type => (
-                  <option key={type.value} value={type.value}>
-                    {type.label}
-                  </option>
-                ))}
-              </select>
+              <div className="flex items-center gap-2">
+                <select
+                  name="waste_type"
+                  value={formData.waste_type}
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  required
+                >
+                  {wasteTypes.map(type => (
+                    <option key={type.value} value={type.value}>
+                      {type.label}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  onClick={handleSuggestCategory}
+                  disabled={suggestionLoading || !formData.title}
+                  className="px-3 py-2 text-sm bg-green-100 text-green-700 rounded-lg hover:bg-green-200 disabled:opacity-50"
+                >
+                  {suggestionLoading ? '...' : 'Suggérer'}
+                </button>
+              </div>
             </div>
 
             {/* Quantity */}
@@ -247,6 +284,129 @@ const CreateAnnouncementPage = () => {
                   className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                   required
                 />
+              </div>
+            </div>
+
+            {/* Planning de Disponibilité */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                <Calendar className="w-4 h-4 inline mr-2" />
+                Planning de Disponibilité (optionnel)
+              </label>
+              <p className="text-xs text-gray-500 mb-3">
+                Définissez vos créneaux horaires disponibles pour la collecte
+              </p>
+              
+              <div className="space-y-3">
+                {formData.availability_schedule.map((schedule, index) => (
+                  <div key={index} className="border border-gray-200 rounded-lg p-4">
+                    <div className="grid grid-cols-2 gap-4 mb-3">
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700 mb-1">Jour</label>
+                        <select
+                          value={schedule.day}
+                          onChange={(e) => {
+                            const newSchedule = [...formData.availability_schedule];
+                            newSchedule[index].day = e.target.value;
+                            setFormData({...formData, availability_schedule: newSchedule});
+                          }}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                        >
+                          <option value="monday">Lundi</option>
+                          <option value="tuesday">Mardi</option>
+                          <option value="wednesday">Mercredi</option>
+                          <option value="thursday">Jeudi</option>
+                          <option value="friday">Vendredi</option>
+                          <option value="saturday">Samedi</option>
+                          <option value="sunday">Dimanche</option>
+                        </select>
+                      </div>
+                      <div className="flex items-end">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const newSchedule = formData.availability_schedule.filter((_, i) => i !== index);
+                            setFormData({...formData, availability_schedule: newSchedule});
+                          }}
+                          className="px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      {schedule.time_slots.map((slot, slotIndex) => (
+                        <div key={slotIndex} className="flex items-center gap-2">
+                          <input
+                            type="time"
+                            value={slot.start}
+                            onChange={(e) => {
+                              const newSchedule = [...formData.availability_schedule];
+                              newSchedule[index].time_slots[slotIndex].start = e.target.value;
+                              setFormData({...formData, availability_schedule: newSchedule});
+                            }}
+                            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                          />
+                          <span className="text-gray-500">à</span>
+                          <input
+                            type="time"
+                            value={slot.end}
+                            onChange={(e) => {
+                              const newSchedule = [...formData.availability_schedule];
+                              newSchedule[index].time_slots[slotIndex].end = e.target.value;
+                              setFormData({...formData, availability_schedule: newSchedule});
+                            }}
+                            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const newSchedule = [...formData.availability_schedule];
+                              newSchedule[index].time_slots = newSchedule[index].time_slots.filter((_, i) => i !== slotIndex);
+                              setFormData({...formData, availability_schedule: newSchedule});
+                            }}
+                            className="px-2 py-2 text-red-600 hover:bg-red-50 rounded-lg"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ))}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const newSchedule = [...formData.availability_schedule];
+                          newSchedule[index].time_slots.push({ start: '09:00', end: '17:00' });
+                          setFormData({...formData, availability_schedule: newSchedule});
+                        }}
+                        className="text-sm text-green-600 hover:text-green-700 flex items-center gap-1"
+                      >
+                        <Plus className="w-4 h-4" />
+                        Ajouter un créneau
+                      </button>
+                    </div>
+                  </div>
+                ))}
+                
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFormData({
+                      ...formData,
+                      availability_schedule: [
+                        ...formData.availability_schedule,
+                        {
+                          day: 'monday',
+                          time_slots: [{ start: '09:00', end: '17:00' }]
+                        }
+                      ]
+                    });
+                  }}
+                  className="w-full px-4 py-2 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-green-500 hover:text-green-600 transition flex items-center justify-center gap-2"
+                >
+                  <Plus className="w-4 h-4" />
+                  Ajouter un jour
+                </button>
               </div>
             </div>
 

@@ -51,6 +51,34 @@ const announcementSchema = new mongoose.Schema({
   reserved_until: {
     type: Date
   },
+  availability_schedule: {
+    type: [{
+      day: {
+        type: String,
+        enum: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
+      },
+      time_slots: [{
+        start: String, // Format "HH:mm"
+        end: String    // Format "HH:mm"
+      }]
+    }],
+    default: []
+  },
+  qr_code: {
+    type: String,
+    unique: true,
+    sparse: true
+  },
+  qr_code_expires: {
+    type: Date
+  },
+  collected_by: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  },
+  collection_confirmed_at: {
+    type: Date
+  },
   created_at: {
     type: Date,
     default: Date.now

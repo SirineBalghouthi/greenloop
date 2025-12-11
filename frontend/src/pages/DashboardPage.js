@@ -65,27 +65,27 @@ const DashboardPage = () => {
   return (
     <Layout>
       <div className="space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
+        {/* Header - Amélioré */}
+        <div className="flex items-center justify-between bg-gradient-to-r from-green-500 to-green-600 rounded-xl p-6 text-white shadow-lg">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">
+            <h1 className="text-3xl font-bold">
               Bonjour, {user?.full_name}! 👋
             </h1>
-            <p className="text-gray-600 mt-1">
-              Voici votre activité et votre impact
+            <p className="text-green-50 mt-1">
+              Voici votre activité et votre impact environnemental
             </p>
           </div>
           <button
             onClick={() => navigate('/creer-annonce')}
-            className="flex items-center gap-2 px-6 py-3 bg-green-500 text-white rounded-lg font-medium hover:bg-green-600 transition"
+            className="flex items-center gap-2 px-6 py-3 bg-white text-green-600 rounded-lg font-semibold hover:bg-green-50 transition shadow-md"
           >
             <Plus className="w-5 h-5" />
             Nouvelle annonce
           </button>
         </div>
 
-        {/* Level Card */}
-        <div className={`bg-gradient-to-r ${getLevelColor(stats?.level)} rounded-xl p-6 text-white`}>
+        {/* Level Card - Amélioré */}
+        <div className={`bg-gradient-to-r ${getLevelColor(stats?.level)} rounded-xl p-6 text-white shadow-xl`}>
           <div className="flex items-center justify-between mb-4">
             <div>
               <div className="text-sm opacity-90 mb-1">Niveau Actuel</div>
@@ -110,50 +110,50 @@ const DashboardPage = () => {
           </p>
         </div>
 
-        {/* Stats Grid */}
+        {/* Stats Grid - Amélioré */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+          <div className="bg-white rounded-xl p-6 shadow-md border border-gray-100 hover:shadow-lg transition">
             <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                <Package className="w-6 h-6 text-blue-600" />
+              <div className="w-14 h-14 bg-gradient-to-br from-blue-400 to-blue-600 rounded-xl flex items-center justify-center shadow-md">
+                <Package className="w-7 h-7 text-white" />
               </div>
               <TrendingUp className="w-5 h-5 text-green-500" />
             </div>
             <div className="text-3xl font-bold text-gray-900 mb-1">
               {stats?.announcements_count || 0}
             </div>
-            <div className="text-sm text-gray-600">Annonces créées</div>
+            <div className="text-sm text-gray-600 font-medium">Annonces créées</div>
           </div>
 
-          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+          <div className="bg-white rounded-xl p-6 shadow-md border border-gray-100 hover:shadow-lg transition">
             <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                <Award className="w-6 h-6 text-green-600" />
+              <div className="w-14 h-14 bg-gradient-to-br from-green-400 to-green-600 rounded-xl flex items-center justify-center shadow-md">
+                <Award className="w-7 h-7 text-white" />
               </div>
               <TrendingUp className="w-5 h-5 text-green-500" />
             </div>
             <div className="text-3xl font-bold text-gray-900 mb-1">
               {stats?.collections_count || 0}
             </div>
-            <div className="text-sm text-gray-600">Collectes réalisées</div>
+            <div className="text-sm text-gray-600 font-medium">Collectes réalisées</div>
           </div>
 
-          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+          <div className="bg-white rounded-xl p-6 shadow-md border border-gray-100 hover:shadow-lg transition">
             <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                <Leaf className="w-6 h-6 text-purple-600" />
+              <div className="w-14 h-14 bg-gradient-to-br from-purple-400 to-purple-600 rounded-xl flex items-center justify-center shadow-md">
+                <Leaf className="w-7 h-7 text-white" />
               </div>
               <TrendingUp className="w-5 h-5 text-green-500" />
             </div>
             <div className="text-3xl font-bold text-gray-900 mb-1">
               {stats?.kg_recycled || 0} kg
             </div>
-            <div className="text-sm text-gray-600">Déchets recyclés</div>
+            <div className="text-sm text-gray-600 font-medium">Déchets recyclés</div>
           </div>
         </div>
 
-        {/* Impact Environnemental */}
-        <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-8 text-white">
+        {/* Impact Environnemental - Amélioré */}
+        <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-8 text-white shadow-xl">
           <div className="flex items-center gap-3 mb-6">
             <Leaf className="w-8 h-8" />
             <h2 className="text-2xl font-bold">Votre Impact Environnemental</h2>
@@ -185,13 +185,15 @@ const DashboardPage = () => {
           </p>
         </div>
 
-        {/* Quick Actions */}
+        {/* Quick Actions - Amélioré */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <button
             onClick={() => navigate('/annonces')}
-            className="bg-white rounded-xl p-6 shadow-sm border border-gray-200 hover:border-green-500 transition text-left"
+            className="bg-white rounded-xl p-6 shadow-md border border-gray-100 hover:shadow-lg hover:border-green-500 transition text-left group"
           >
-            <Package className="w-8 h-8 text-green-600 mb-3" />
+            <div className="w-12 h-12 bg-gradient-to-br from-green-400 to-green-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition">
+              <Package className="w-6 h-6 text-white" />
+            </div>
             <h3 className="text-lg font-semibold text-gray-900 mb-2">
               Voir les annonces
             </h3>
@@ -202,9 +204,11 @@ const DashboardPage = () => {
 
           <button
             onClick={() => navigate('/carte')}
-            className="bg-white rounded-xl p-6 shadow-sm border border-gray-200 hover:border-green-500 transition text-left"
+            className="bg-white rounded-xl p-6 shadow-md border border-gray-100 hover:shadow-lg hover:border-green-500 transition text-left group"
           >
-            <MapPin className="w-8 h-8 text-green-600 mb-3" />
+            <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-blue-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition">
+              <MapPin className="w-6 h-6 text-white" />
+            </div>
             <h3 className="text-lg font-semibold text-gray-900 mb-2">
               Carte interactive
             </h3>

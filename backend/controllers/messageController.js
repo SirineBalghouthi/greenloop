@@ -20,7 +20,7 @@ exports.getConversations = async (req, res) => {
     // Grouper par conversation (autre utilisateur)
     const conversationsMap = new Map();
 
-    messages.forEach(msg => {
+    for (const msg of messages) {
       const otherUserId = msg.sender_id._id.toString() === userId.toString() 
         ? msg.receiver_id._id.toString() 
         : msg.sender_id._id.toString();
@@ -30,20 +30,24 @@ exports.getConversations = async (req, res) => {
         : msg.sender_id;
 
       if (!conversationsMap.has(otherUserId)) {
+        // Récupérer le statut en ligne de l'utilisateur
+        const otherUserData = await User.findById(otherUser._id).select('is_online last_seen');
         conversationsMap.set(otherUserId, {
           _id: otherUserId,
           other_user: {
             _id: otherUser._id,
             full_name: otherUser.full_name,
             phone: otherUser.phone,
-            user_type: otherUser.user_type
+            user_type: otherUser.user_type,
+            is_online: otherUserData?.is_online || false,
+            last_seen: otherUserData?.last_seen || new Date()
           },
           last_message: msg.content || msg.message,
           last_message_at: msg.created_at,
           unread_count: 0
         });
       }
-    });
+    }
 
     const conversations = Array.from(conversationsMap.values())
       .sort((a, b) => new Date(b.last_message_at) - new Date(a.last_message_at));

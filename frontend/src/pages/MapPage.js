@@ -41,18 +41,27 @@ function MapCenter({ center, zoom }) {
   return null;
 }
 
-// Créer une icône personnalisée avec couleur
-const createCustomIcon = (color) => {
+// Créer une icône personnalisée avec couleur - Améliorée
+const createCustomIcon = (color, wasteType) => {
+  const emojiMap = {
+    medicaments: '💊',
+    plastiques: '♻️',
+    piles: '🔋',
+    textiles: '👕',
+    electronique: '📱'
+  };
+  const emoji = emojiMap[wasteType] || '🗑️';
+  
   return L.divIcon({
     className: 'custom-marker',
-    html: `<div style="background-color: ${color}; width: 32px; height: 32px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); border: 3px solid white; box-shadow: 0 3px 10px rgba(0,0,0,0.4);">
-      <div style="transform: rotate(45deg); width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;">
-        <span style="color: white; font-size: 14px; font-weight: bold;">🗑️</span>
+    html: `<div style="background-color: ${color}; width: 36px; height: 36px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); border: 3px solid white; box-shadow: 0 4px 12px rgba(0,0,0,0.5);">
+      <div style="transform: rotate(45deg); width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 16px;">
+        ${emoji}
       </div>
     </div>`,
-    iconSize: [32, 32],
-    iconAnchor: [16, 32],
-    popupAnchor: [0, -32]
+    iconSize: [36, 36],
+    iconAnchor: [18, 36],
+    popupAnchor: [0, -36]
   });
 };
 
@@ -190,36 +199,12 @@ const MapPage = () => {
 
   return (
     <Layout>
-      <div className="h-screen flex flex-col">
+      <div className="h-screen flex flex-col relative">
         {/* Header avec bouton filtres */}
         <div className="bg-white shadow-sm p-4 flex items-center justify-between z-10">
           <div className="flex-1">
-            <h1 className="text-2xl font-bold text-gray-900">Carte Interactive (Tous)</h1>
+            <h1 className="text-2xl font-bold text-gray-900">Carte Interactive</h1>
             <p className="text-sm text-gray-600">{announcements.length} annonce(s) trouvée(s)</p>
-          </div>
-          
-          {/* Légende des couleurs */}
-          <div className="hidden lg:flex items-center gap-3 mr-4 px-4 py-2 bg-gray-50 rounded-lg">
-            <div className="flex items-center gap-1.5 text-xs">
-              <div className="w-3 h-3 rounded-full" style={{ backgroundColor: wasteTypeColors.medicaments }}></div>
-              <span className="text-gray-700">Médicaments</span>
-            </div>
-            <div className="flex items-center gap-1.5 text-xs">
-              <div className="w-3 h-3 rounded-full" style={{ backgroundColor: wasteTypeColors.plastiques }}></div>
-              <span className="text-gray-700">Plastiques</span>
-            </div>
-            <div className="flex items-center gap-1.5 text-xs">
-              <div className="w-3 h-3 rounded-full" style={{ backgroundColor: wasteTypeColors.piles }}></div>
-              <span className="text-gray-700">Piles</span>
-            </div>
-            <div className="flex items-center gap-1.5 text-xs">
-              <div className="w-3 h-3 rounded-full" style={{ backgroundColor: wasteTypeColors.textiles }}></div>
-              <span className="text-gray-700">Textiles</span>
-            </div>
-            <div className="flex items-center gap-1.5 text-xs">
-              <div className="w-3 h-3 rounded-full" style={{ backgroundColor: wasteTypeColors.electronique }}></div>
-              <span className="text-gray-700">Électronique</span>
-            </div>
           </div>
           
           <div className="flex gap-2">
@@ -229,7 +214,7 @@ const MapPage = () => {
                   setMapCenter([userLocation.lat, userLocation.lng]);
                   setMapZoom(15);
                 }}
-                className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 flex items-center gap-2"
+                className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 flex items-center gap-2 shadow-md"
               >
                 <Navigation className="w-4 h-4" />
                 Ma position
@@ -237,25 +222,61 @@ const MapPage = () => {
             )}
             <button
               onClick={() => setShowFilters(!showFilters)}
-              className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 flex items-center gap-2"
+              className={`px-4 py-2 rounded-lg flex items-center gap-2 shadow-md transition ${
+                showFilters 
+                  ? 'bg-green-500 text-white hover:bg-green-600' 
+                  : 'bg-blue-500 text-white hover:bg-blue-600'
+              }`}
             >
               <Filter className="w-4 h-4" />
-              Filtres
+              {showFilters ? 'Masquer' : 'Filtres'}
             </button>
           </div>
         </div>
 
-        {/* Sidebar Filtres */}
-        {showFilters && (
-          <div className="absolute left-4 top-24 bg-white rounded-xl shadow-xl p-6 z-20 w-80 max-h-[calc(100vh-8rem)] overflow-y-auto">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-bold">Filtres</h2>
-              <button onClick={() => setShowFilters(false)} className="text-gray-500 hover:text-gray-700">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
+        {/* Filtres Panel - Amélioré */}
+        <div className={`absolute top-16 right-4 bg-white rounded-xl shadow-2xl transition-all duration-300 ${
+          showFilters ? 'opacity-100 translate-x-0 z-50' : 'opacity-0 translate-x-full pointer-events-none z-0'
+        }`} style={{ width: '320px', maxHeight: 'calc(100vh - 5rem)' }}>
+          {showFilters && (
+            <div className="p-6 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 5rem)' }}>
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-bold text-gray-900">Filtres</h2>
+                <button 
+                  onClick={() => setShowFilters(false)} 
+                  className="text-gray-500 hover:text-gray-700 p-1 hover:bg-gray-100 rounded-lg transition">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
 
-            <div className="space-y-4">
+              {/* Légende des couleurs */}
+              <div className="mb-6 p-4 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg">
+                <h3 className="text-sm font-semibold text-gray-700 mb-3">Légende</h3>
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 rounded-full" style={{ backgroundColor: wasteTypeColors.medicaments }}></div>
+                    <span className="text-gray-700">Médicaments</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 rounded-full" style={{ backgroundColor: wasteTypeColors.plastiques }}></div>
+                    <span className="text-gray-700">Plastiques</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 rounded-full" style={{ backgroundColor: wasteTypeColors.piles }}></div>
+                    <span className="text-gray-700">Piles</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 rounded-full" style={{ backgroundColor: wasteTypeColors.textiles }}></div>
+                    <span className="text-gray-700">Textiles</span>
+                  </div>
+                  <div className="flex items-center gap-2 col-span-2">
+                    <div className="w-4 h-4 rounded-full" style={{ backgroundColor: wasteTypeColors.electronique }}></div>
+                    <span className="text-gray-700">Électronique</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-4">
               {/* Type de déchet */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Type de déchet</label>
@@ -333,26 +354,27 @@ const MapPage = () => {
               </div>
 
               {/* Boutons */}
-              <div className="flex gap-2">
+              <div className="flex gap-2 pt-4 border-t border-gray-200">
                 <button
                   onClick={resetFilters}
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 font-medium transition"
                 >
                   Réinitialiser
                 </button>
                 <button
                   onClick={() => setShowFilters(false)}
-                  className="flex-1 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600"
+                  className="flex-1 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 font-medium transition"
                 >
                   Appliquer
                 </button>
               </div>
             </div>
-          </div>
-        )}
+            </div>
+          )}
+        </div>
 
         {/* Carte */}
-        <div className="flex-1 relative">
+        <div className="flex-1 relative" style={{ zIndex: 1 }}>
           {loading ? (
             <div className="absolute inset-0 flex items-center justify-center bg-gray-100 z-10">
               <div className="text-center">
@@ -374,13 +396,12 @@ const MapPage = () => {
               
               {announcements.map((ann) => {
                 const isHighlighted = highlightedAnnouncement === ann.id || highlightedAnnouncement === ann._id;
+                const markerColor = isHighlighted ? '#ff0000' : (wasteTypeColors[ann.waste_type] || '#6b7280');
                 return (
                   <Marker
                     key={ann.id || ann._id}
                     position={[ann.latitude, ann.longitude]}
-                    icon={createCustomIcon(
-                      isHighlighted ? '#ff0000' : (wasteTypeColors[ann.waste_type] || '#6b7280')
-                    )}
+                    icon={createCustomIcon(markerColor, ann.waste_type)}
                   >
                   <Popup>
                     <div className="p-2 min-w-[200px]">

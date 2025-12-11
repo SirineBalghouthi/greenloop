@@ -10,6 +10,8 @@ export const useAuth = () => {
   return context;
 };
 
+const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(localStorage.getItem('token'));
@@ -28,7 +30,7 @@ export const AuthProvider = ({ children }) => {
 
   const fetchUserProfile = async (authToken) => {
     try {
-      const response = await fetch('http://localhost:5000/api/auth/profile', {
+      const response = await fetch(`${API_BASE}/auth/profile`, {
         headers: {
           'Authorization': `Bearer ${authToken}`
         }
@@ -53,7 +55,7 @@ export const AuthProvider = ({ children }) => {
   // Envoyer le code de vérification
   const sendVerificationCode = async (phone) => {
     try {
-      const response = await fetch('http://localhost:5000/api/auth/login', {
+      const response = await fetch(`${API_BASE}/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -77,7 +79,7 @@ export const AuthProvider = ({ children }) => {
   // Vérifier le code et se connecter
   const verifyCode = async (phone, code, userData = {}) => {
     try {
-      const response = await fetch('http://localhost:5000/api/auth/verify', {
+      const response = await fetch(`${API_BASE}/auth/verify`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

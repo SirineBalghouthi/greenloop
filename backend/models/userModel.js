@@ -54,6 +54,14 @@ const userSchema = new mongoose.Schema({
   profile_picture: {
     type: String
   },
+  is_online: {
+    type: Boolean,
+    default: false
+  },
+  last_seen: {
+    type: Date,
+    default: Date.now
+  },
   created_at: {
     type: Date,
     default: Date.now
